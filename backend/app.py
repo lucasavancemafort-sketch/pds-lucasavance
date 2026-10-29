@@ -47,6 +47,42 @@ class Pet(db.Model):
 # ROTAS DE DONOS - AULA 02 COM ORM
 # ---------------------------------------------------------------
 
+
+# VALIDACAO DE DADOS - AULA 05
+def validar_dono(dados):
+    erros = []
+    if not isinstance(dados, dict):
+        return ["O corpo da requisicao precisa ser um JSON de objeto"]
+    nome = dados.get("nome")
+    if not isinstance(nome, str) or not nome.strip():
+        erros.append("O campo nome e obrigatorio e nao pode ser vazio")
+    telefone = dados.get("telefone")
+    if not isinstance(telefone, str) or not telefone.strip():
+        erros.append("O campo telefone e obrigatorio e nao pode ser vazio")
+    return erros
+
+
+def validar_pet(dados):
+    erros = []
+    if not isinstance(dados, dict):
+        return ["O corpo da requisicao precisa ser um JSON de objeto"]
+    nome = dados.get("nome")
+    if not isinstance(nome, str) or not nome.strip():
+        erros.append("O campo nome e obrigatorio e nao pode ser vazio")
+    especie = dados.get("especie")
+    if not isinstance(especie, str) or not especie.strip():
+        erros.append("O campo especie e obrigatorio e nao pode ser vazio")
+    idade = dados.get("idade")
+    if type(idade) is not int or idade < 0:
+        erros.append("O campo idade deve ser um numero inteiro maior ou igual a zero")
+    dono_id = dados.get("dono_id")
+    if type(dono_id) is not int:
+        erros.append("O campo dono_id deve ser um numero inteiro")
+    elif db.session.get(Dono, dono_id) is None:
+        erros.append("Nao existe dono com esse dono_id")
+    return erros
+
+
 @app.route("/donos", methods=["GET"])
 def listar_donos():
     donos = Dono.query.all()
@@ -74,8 +110,9 @@ def listar_pets_do_dono(dono_id):
 @app.route("/donos", methods=["POST"])
 def criar_dono():
     dados = request.get_json(silent=True)
-    if not dados or "nome" not in dados or "telefone" not in dados:
-        return jsonify({"erro": "Informe nome e telefone"}), 400
+    erros = validar_dono(dados)
+    if erros:
+        return jsonify({"erros": erros}), 400
 
     novo_dono = Dono(nome=dados["nome"], telefone=dados["telefone"])
     db.session.add(novo_dono)
@@ -86,8 +123,9 @@ def criar_dono():
 @app.route("/donos/<int:dono_id>", methods=["PUT"])
 def atualizar_dono(dono_id):
     dados = request.get_json(silent=True)
-    if not dados or "nome" not in dados or "telefone" not in dados:
-        return jsonify({"erro": "Informe nome e telefone"}), 400
+    erros = validar_dono(dados)
+    if erros:
+        return jsonify({"erros": erros}), 400
 
     dono = db.session.get(Dono, dono_id)
     if dono is None:
@@ -141,13 +179,9 @@ def buscar_pet(pet_id):
 @app.route("/pets", methods=["POST"])
 def criar_pet():
     dados = request.get_json(silent=True)
-    campos = ("nome", "especie", "idade", "dono_id")
-    if not dados or any(campo not in dados for campo in campos):
-        return jsonify({"erro": "Informe nome, especie, idade e dono_id"}), 400
-
-    dono = db.session.get(Dono, dados["dono_id"])
-    if dono is None:
-        return jsonify({"erro": "Dono nao encontrado"}), 404
+    erros = validar_pet(dados)
+    if erros:
+        return jsonify({"erros": erros}), 400
 
     novo_pet = Pet(
         nome=dados["nome"],
@@ -163,17 +197,13 @@ def criar_pet():
 @app.route("/pets/<int:pet_id>", methods=["PUT"])
 def atualizar_pet(pet_id):
     dados = request.get_json(silent=True)
-    campos = ("nome", "especie", "idade", "dono_id")
-    if not dados or any(campo not in dados for campo in campos):
-        return jsonify({"erro": "Informe nome, especie, idade e dono_id"}), 400
+    erros = validar_pet(dados)
+    if erros:
+        return jsonify({"erros": erros}), 400
 
     pet = db.session.get(Pet, pet_id)
     if pet is None:
         return jsonify({"erro": "Pet nao encontrado"}), 404
-
-    dono = db.session.get(Dono, dados["dono_id"])
-    if dono is None:
-        return jsonify({"erro": "Dono nao encontrado"}), 404
 
     pet.nome = dados["nome"]
     pet.especie = dados["especie"]
