@@ -65,3 +65,27 @@ Content-Type: application/json
 
 ### Remover um pet
 DELETE http://localhost:5000/pets/5
+
+### Aula 05 - idade como texto (esperado: 400)
+POST http://localhost:5000/pets
+Content-Type: application/json
+
+{ "nome": "Teste texto", "especie": "cachorro", "idade": "dois", "dono_id": 1 }
+
+### Aula 05 - idade negativa (esperado: 400)
+POST http://localhost:5000/pets
+Content-Type: application/json
+
+{ "nome": "Teste negativo", "especie": "gato", "idade": -5, "dono_id": 1 }
+
+### Aula 05 - dono inexistente (esperado: 400)
+POST http://localhost:5000/pets
+Content-Type: application/json
+
+{ "nome": "Teste dono", "especie": "cachorro", "idade": 2, "dono_id": 999 }
+
+### Aula 05 - nome vazio (esperado: 400)
+POST http://localhost:5000/pets
+Content-Type: application/json
+
+{ "nome": "", "especie": "cachorro", "idade": 2, "dono_id": 1 }
